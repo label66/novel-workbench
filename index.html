@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的小说创作工作台 · Gemini 手机端中枢</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: #FAF8F5;
+      color: #1F2937;
+    }
+    .tab-btn {
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background-color: #1F2937;
+      color: #FAF8F5;
+      box-shadow: 0 2px 8px rgba(31, 41, 55, 0.15);
+    }
+    .card-hover {
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(31, 41, 55, 0.06);
+      border-color: #D97706;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    #toast {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased pb-16">
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-3 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2">
+    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg">已复制到剪贴板</span>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-stone-200 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-3">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm shrink-0">
+            <i data-lucide="feather" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">我的小说创作工作台</h1>
+            <p class="text-xs text-stone-500">Gemini 手机端专属中枢 · 作家本我 <span class="font-semibold text-amber-700">v0.3</span> · 自动存档提醒已开启</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">6 中文技能</span>
+          <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">6 云端入口</span>
+          <span class="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 border border-stone-200 font-medium">4 文风卡</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1.5 mt-3 overflow-x-auto no-scrollbar pb-0.5" aria-label="主导航">
+        <button data-tab="overview" class="tab-btn active shrink-0 px-3.5 py-1.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100 flex items-center gap-1.5">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i>总览与口令
+        </button>
+        <button data-tab="persona" class="tab-btn shrink-0 px-3.5 py-1.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100 flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>作家本我 v0.3
+        </button>
+        <button data-tab="skills" class="tab-btn shrink-0 px-3.5 py-1.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100 flex items-center gap-1.5">
+          <i data-lucide="cpu" class="w-4 h-4"></i>6 大技能
+        </button>
+        <button data-tab="styles" class="tab-btn shrink-0 px-3.5 py-1.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100 flex items-center gap-1.5">
+          <i data-lucide="palette" class="w-4 h-4"></i>文风基因库
+        </button>
+        <button data-tab="workflow" class="tab-btn shrink-0 px-3.5 py-1.5 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-100 flex items-center gap-1.5">
+          <i data-lucide="list-checks" class="w-4 h-4"></i>5 步闭环
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+    <!-- TAB 1: Overview & Quick Prompts -->
+    <section id="tab-overview" class="tab-panel space-y-6">
+      <!-- Cloud Assets -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+            <i data-lucide="folder-kanban" class="w-4 h-4 text-amber-600"></i>
+            云端资产直达（Google Workspace）
+          </h2>
+          <span class="text-xs text-stone-500">点击直接打开对应文件</span>
+        </div>
+        <div id="assets-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+      </div>
+
+      <!-- Quick Copy Prompt Generator -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-amber-600"></i>
+              手机端高频快捷口令（一键复制）
+            </h2>
+            <p class="text-xs text-stone-500 mt-0.5">填上当前书名与章号，下方读档/存档口令自动替换</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="input-book-name" type="text" value="书名" placeholder="输入当前书名" class="w-32 sm:w-36 px-3 py-1.5 text-sm rounded-lg border border-stone-300 focus:outline-none focus:border-amber-600 bg-stone-50" />
+            <input id="input-chapter-num" type="number" min="1" value="1" placeholder="章号" class="w-20 px-3 py-1.5 text-sm rounded-lg border border-stone-300 focus:outline-none focus:border-amber-600 bg-stone-50" />
+          </div>
+        </div>
+        <div id="prompts-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Author Persona v0.3 -->
+    <section id="tab-persona" class="tab-panel hidden space-y-5">
+      <!-- Persona Hero -->
+      <div class="bg-gradient-to-br from-stone-900 to-stone-800 text-stone-100 rounded-2xl p-5 sm:p-6 shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold mb-2">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>默认自动生效 · 无需每次选文风
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold tracking-tight">作家本我 · v0.3 深度拆书进化态</h2>
+            <p class="text-sm text-stone-300 mt-1">开新书不指定文风卡时，自动沿用本我笔触与开篇工程；随完本与拆书持续成长。</p>
+          </div>
+          <a href="https://docs.google.com/document/d/1okDsRq_dDRUtyI5s9sN6boGh8RKeyr_I2EIaPN0qVFA/edit?usp=drivesdk&ouid=111264684932390575322" target="_blank" rel="noopener noreferrer" class="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition">
+            打开云端档案 <i data-lucide="external-link" class="w-4 h-4"></i>
+          </a>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-stone-700/80 text-center sm:text-left">
+          <div>
+            <div class="text-xs text-stone-400">完本作品</div>
+            <div class="text-lg font-bold text-white mt-0.5">0 本</div>
+          </div>
+          <div>
+            <div class="text-xs text-stone-400">深度拆书沉淀</div>
+            <div class="text-lg font-bold text-amber-400 mt-0.5">1 部</div>
+          </div>
+          <div>
+            <div class="text-xs text-stone-400">主战题材</div>
+            <div class="text-sm sm:text-base font-semibold text-white mt-0.5">都市 / 古代 / 脑洞</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene Pacing Table -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5">
+        <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <i data-lucide="activity" class="w-4 h-4 text-amber-600"></i>
+          v0.1 奠基：分场景动态断句与红线洁癖
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr class="border-b border-stone-200 text-xs text-stone-500 uppercase">
+                <th class="py-2 pr-3 font-semibold">场景类型</th>
+                <th class="py-2 px-3 font-semibold">单句/段落上限</th>
+                <th class="py-2 pl-3 font-semibold">核心写法与红线</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-stone-100 text-stone-700">
+              <tr>
+                <td class="py-2.5 pr-3 font-semibold text-gray-900">战斗 / 危机</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-medium text-xs">25字内 · ≤2句/段</span></td>
+                <td class="py-2.5 pl-3">聚焦动作、声音与生理反应，零修辞，大量单句成段</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-semibold text-gray-900">日常 / 互动</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium text-xs">35字内 · ≤4句/段</span></td>
+                <td class="py-2.5 pl-3">动作、口语对话与生活细节，穿插真实闲笔打破顺滑感</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-semibold text-gray-900">情感 / 离别</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium text-xs">40字内 · ≤5句/段</span></td>
+                <td class="py-2.5 pl-3">单个微动作、眼神与环境烘托，禁止直接命名情绪</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 pr-3 font-semibold text-gray-900">世界观 / 铺垫</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium text-xs">50字内 · ≤6句/段</span></td>
+                <td class="py-2.5 pl-3">冰山原则借冲突自然漏出，严禁括号科普与设定讲课</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3 p-3 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-600 leading-relaxed">
+          <span class="font-semibold text-gray-900">叙事洁癖红线：</span>严禁破折号；严禁高频 AI 词（仿佛、宛如、不由自主、下意识、细密的汗、嘴角勾起一抹弧度等）与商务词（核心、终极、闭环、底层逻辑）；严禁“他XX地说 / XX见状”模板及段尾说教总结。
+        </div>
+      </div>
+
+      <!-- v0.2 & v0.3 Absorbed Craft -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5">
+          <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-bold">v0.2</span>
+            已吸收的招牌笔法
+          </h3>
+          <ul class="space-y-2.5 text-sm text-stone-700">
+            <li class="flex gap-2"><span class="text-amber-600 font-bold">1.</span><span><strong>市井烟火 × 超凡危机对冲</strong>：用生活细节消解悬浮感，天然出喜剧张力。</span></li>
+            <li class="flex gap-2"><span class="text-amber-600 font-bold">2.</span><span><strong>双面讨喜与温情反差</strong>：小缺点做日常笑点，极致护短留给关键时刻，常用“搞笑3次+1句克制温情”。</span></li>
+            <li class="flex gap-2"><span class="text-amber-600 font-bold">3.</span><span><strong>反装逼拆台式对话</strong>：对手摆架子放狠话时，用极短务实吐槽戳破气场。</span></li>
+            <li class="flex gap-2"><span class="text-amber-600 font-bold">4.</span><span><strong>高频互动埋点</strong>：每章留 1～2 处反差小习惯或反转金句，不解释，留出段评空间。</span></li>
+            <li class="flex gap-2"><span class="text-amber-600 font-bold">5.</span><span><strong>防后期失衡补丁</strong>：中后期战力升级后依然锁死核心人物的日常烟火气。</span></li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5">
+          <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">v0.3</span>
+            已吸收的开篇与人物工程
+          </h3>
+          <ul class="space-y-2.5 text-sm text-stone-700">
+            <li class="flex gap-2"><span class="text-emerald-600 font-bold">1.</span><span><strong>四层洋葱信息投放</strong>：日常底色 → 突发亮单一机制 → 生活化试水演示规则 → 现实恶意首战兑现。</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-bold">2.</span><span><strong>明暗双轨情绪模型</strong>：明线高频轻快反馈留人，暗线压生存困境与羁绊托底。</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-bold">3.</span><span><strong>主角防招烦 3 道保险锁</strong>：真实生存困境 + 对外强硬/对内护短双标 + 金手指赋予正当性。</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-bold">4.</span><span><strong>现代提速版前 10 章骨架</strong>：1-2章立羁绊露苗头 → 3-4章小切口兑现 → 5-7章扩范围埋暗线 → 8-10章零负担反杀闭环。</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Evolution Timeline -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5">
+        <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <i data-lucide="git-commit-horizontal" class="w-4 h-4 text-amber-600"></i>
+          版本进化日志
+        </h3>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3 text-sm">
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-xs mt-0.5">v0.3</span>
+            <div>
+              <div class="font-semibold text-gray-900">2026-11-25 · 拆书吸收 #1：《大王饶命》前 10 章深度结构</div>
+              <p class="text-xs text-stone-500 mt-0.5">吸收四层洋葱信息投放、明暗双轨情绪模型、人设防招烦 3 道保险锁与提速版前 10 章骨架。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 text-sm">
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-xs mt-0.5">v0.2</span>
+            <div>
+              <div class="font-semibold text-gray-900">2026-11-25 · 拆书吸收 #1：《大王饶命》核心笔法</div>
+              <p class="text-xs text-stone-500 mt-0.5">吸收市井超凡对冲、双面讨喜温情反差、反装逼拆台对话与防后期失衡补丁。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 text-sm">
+            <span class="px-2 py-0.5 rounded bg-stone-200 text-stone-700 font-bold text-xs mt-0.5">v0.1</span>
+            <div>
+              <div class="font-semibold text-gray-900">2026-11-25 · 初始职业态建立</div>
+              <p class="text-xs text-stone-500 mt-0.5">确立限知视角、分场景动态断句、冰山原则与反 AI/商务词洁癖。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: 6 Chinese Skills -->
+    <section id="tab-skills" class="tab-panel hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-bold text-gray-900">6 大中文写作技能（平时自动触发，也可点 `/` 强制指定）</h2>
+        <div class="flex items-center gap-1.5" id="skill-filters">
+          <button data-filter="all" class="skill-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-gray-900 text-white">全部 (6)</button>
+          <button data-filter="plan" class="skill-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-600 hover:bg-stone-100">策划开书</button>
+          <button data-filter="write" class="skill-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-600 hover:bg-stone-100">写作润色</button>
+          <button data-filter="review" class="skill-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-600 hover:bg-stone-100">拆书审稿</button>
+        </div>
+      </div>
+      <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- TAB 4: Pluggable Style Cards -->
+    <section id="tab-styles" class="tab-panel hidden space-y-4">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs sm:text-sm text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span><strong>使用原则：</strong>不点名时默认用「作家本我 v0.3」；只有想临时换马甲写特定流派时，再从下方插一张卡。</span>
+        <a href="https://docs.google.com/document/d/1q-99Wde8yg7U5Ni2jT0uV9FX06hwR0m7iZ6bKON7BUs/edit?usp=drivesdk&ouid=111264684932390575322" target="_blank" rel="noopener noreferrer" class="shrink-0 font-semibold text-amber-800 underline hover:text-amber-950">打开《小说文风基因库》→</a>
+      </div>
+      <div id="styles-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- TAB 5: 5-Step Mobile Workflow & Checklist -->
+    <section id="tab-workflow" class="tab-panel hidden space-y-5">
+      <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5">
+        <h2 class="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <i data-lucide="repeat" class="w-4 h-4 text-amber-600"></i>
+          手机 Gemini App 5 步创作闭环
+        </h2>
+        <div id="workflow-steps" class="space-y-3"></div>
+      </div>
+
+      <!-- Interactive New Book Checklist -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+              <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i>
+              开新书自检清单
+            </h3>
+            <p class="text-xs text-stone-500 mt-0.5">勾选进度会自动保存在当前浏览器中</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="checklist-progress" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">0 / 5</span>
+            <button id="btn-reset-checklist" class="text-xs text-stone-500 hover:text-gray-900 underline">重置</button>
+          </div>
+        </div>
+        <div id="checklist-items" class="space-y-2"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const ASSETS = [
+      {
+        title: '小说创作工作台（总文件夹）',
+        tag: 'Drive 根目录',
+        tagColor: 'bg-blue-50 text-blue-700',
+        icon: 'folder',
+        desc: '统一收纳全部创作模板、文风库与追踪表，内含「连载中」「已完本」分区。',
+        url: 'https://drive.google.com/drive/folders/19uuo75A1kBkcePVavBmAloZ4BqHuY5iM',
+        subLinks: [
+          { label: '连载中', url: 'https://drive.google.com/drive/folders/1wsDiaxZl-RZrBb35pvA-uLIyQWxmkwXg' },
+          { label: '已完本', url: 'https://drive.google.com/drive/folders/1mcndea5xZCMlLn_XGw61kN8UGmvTvgEI' }
+        ]
+      },
+      {
+        title: '作家本我进化档案',
+        tag: 'v0.3 镜像',
+        tagColor: 'bg-amber-50 text-amber-800',
+        icon: 'sparkles',
+        desc: '记录你的默认笔触、已吸收拆书技法、原创语感锚点与版本进化日志。',
+        url: 'https://docs.google.com/document/d/1okDsRq_dDRUtyI5s9sN6boGh8RKeyr_I2EIaPN0qVFA/edit?usp=drivesdk&ouid=111264684932390575322'
+      },
+      {
+        title: '小说设定与记忆档案（通用模板）',
+        tag: '防吃书核心',
+        tagColor: 'bg-emerald-50 text-emerald-700',
+        icon: 'book-open',
+        desc: '含作品信息、绑定文风卡、结局方向、世界观铁律、人物表、暂离回归表与章节滚动摘要。',
+        url: 'https://docs.google.com/document/d/1XVDCLGNU9QqTAHKA1DBlE7TiWW3i69-x4Wv-B_xbmdg/edit?usp=drivesdk&ouid=111264684932390575322'
+      },
+      {
+        title: '小说文风基因库',
+        tag: '4 张预设卡',
+        tagColor: 'bg-purple-50 text-purple-700',
+        icon: 'palette',
+        desc: '可插拔风格卡带盒，含都市轻快、古风冷峻、悬念脑洞、极速物理白描 4 卡及卡 05 空白槽。',
+        url: 'https://docs.google.com/document/d/1q-99Wde8yg7U5Ni2jT0uV9FX06hwR0m7iZ6bKON7BUs/edit?usp=drivesdk&ouid=111264684932390575322'
+      },
+      {
+        title: '小说连载存稿与字数追踪表',
+        tag: 'Google 表格',
+        tagColor: 'bg-teal-50 text-teal-700',
+        icon: 'table-2',
+        desc: '双表自动统计：分章存稿状态、总字数、每日 4000 字达标打卡与读者复盘备注。',
+        url: 'https://docs.google.com/spreadsheets/d/1icYkcQH7KpzQaSqT5hvaiFCyv24J0cz3c4CAsqaNmjU/edit?usp=drivesdk&ouid=111264684932390575322'
+      },
+      {
+        title: '小说灵感碎片库',
+        tag: 'Keep 置顶',
+        tagColor: 'bg-yellow-50 text-yellow-800',
+        icon: 'lightbulb',
+        desc: '手机随时语音或打字记录新书脑洞、名场面、人物台词与书名备选。',
+        url: 'https://keep.google.com/?note=1rzEG63IO0ZKX2fXfrcGuO7w2-rmM2OWHx6R1S7Aou1jdmx-mnfxHF9_ZmfEhVg'
+      }
+    ];
+
+    const SKILLS = [
+      {
+        id: 'novel-outliner',
+        name: '大纲与世界观策划',
+        category: 'plan',
+        badge: '策划开书',
+        trigger: '帮我拆细纲 / 用雪花10步法搭框架 / 给3个结局方向',
+        highlights: [
+          '支持「大事件骨架 + 小事件五要素」与「雪花 10 步法」双模式',
+          '内置强冲突三问、3:1 节奏循环、3/10/30/100 爽点分层',
+          '结尾自动提供“是否存档更新记忆”选择'
+        ]
+      },
+      {
+        id: 'novel-hook-editor',
+        name: '书名简介与黄金三章',
+        category: 'plan',
+        badge: '策划开书',
+        trigger: '帮我起几个书名 / 写个吸量简介 / 优化前3章留存',
+        highlights: [
+          '一次输出 3 组不同风格书名与手机一屏高转化简介',
+          '前 500 字入戏、第 2 章小高潮、第 3 章放大格局强钩子',
+          '结尾自动提供“是否存档更新记忆”选择'
+        ]
+      },
+      {
+        id: 'novel-writer',
+        name: '正文主笔（绑定本我）',
+        category: 'write',
+        badge: '写作润色',
+        trigger: '按刚才的细纲写第 X 章 / 扩写这个场景',
+        highlights: [
+          '未指定文风卡时默认自动沿用「作家本我 v0.3」笔触',
+          '分场景动态断句（25/35/40/50字）+ 冰山原则 + 真实闲笔',
+          '严禁 AI 套话与商务词，结尾主动提醒定稿存档'
+        ]
+      },
+      {
+        id: 'de-ai-writing',
+        name: '去 AI 味精修润色',
+        category: 'write',
+        badge: '写作润色',
+        trigger: '帮我去掉这段的 AI 味 / 改得像真人老作者写的',
+        highlights: [
+          '清除破折号、对称排比、“他XX地说/XX见状”与商务高频词',
+          '注入自然闲笔细节与口语化对话节奏，打破过度顺滑感',
+          '润色完小说正文后主动提醒是否定稿存档'
+        ]
+      },
+      {
+        id: 'novel-critic',
+        name: '毒舌责编与防吃书质检',
+        category: 'review',
+        badge: '拆书审稿',
+        trigger: '当毒舌编辑挑刺 / 检查这段有没有逻辑漏洞或吃书',
+        highlights: [
+          '对照《设定与记忆档案》查战力崩坏、时间线与人设 OOC',
+          '用强冲突三问、3:1 节奏与重大反转 3 处铺垫标尺严格打分',
+          '拒绝客套夸奖，每指出一个硬伤必给可执行改法'
+        ]
+      },
+      {
+        id: 'novel-structure-analyst',
+        name: '爆款拆结构与签约逻辑',
+        category: 'review',
+        badge: '拆书审稿',
+        trigger: '帮我脱敏拆解这本书前三章 / 汇总生成签约逻辑手册',
+        highlights: [
+          '单本 800 字内脱敏提取：首段50字、信息释放点、钩子与讨喜因子',
+          '多本汇总提炼纯抽象《签约逻辑手册》，严守不抄袭红线',
+          '拆解结果可直接喂给「作家本我」实现进化'
+        ]
+      }
+    ];
+
+    const STYLE_CARDS = [
+      {
+        code: '文风卡 01',
+        name: '都市轻快吐槽流',
+        genres: '都市异能、高武、轻恋爱日常',
+        tags: ['短句密', '接地气', '反差幽默', '爽点干脆'],
+        summary: '贴近主角的第三人称限知视角，10～25字短句为主，用便利店、外卖等现代日常反衬超凡能力，对话带接梗与拉扯。',
+        avoid: '忌过度玩烂梗出戏；忌情感戏突转书面抒情腔。'
+      },
+      {
+        code: '文风卡 02',
+        name: '古风冷峻白描流',
+        genres: '古代玄幻、古典仙侠、架空历史权谋',
+        tags: ['克制留白', '画面凌厉', '半文半白', '重氛围'],
+        summary: '镜头感强、少直白心理剖白；用残雪、铜铃、烛火等具体意象替代形容词，文戏舒缓、出剑瞬间切回极短硬句。',
+        avoid: '忌现代网络热梗和翻译腔；忌大段历史/修炼说明书。'
+      },
+      {
+        code: '文风卡 03',
+        name: '强悬念脑洞推演流',
+        genres: '高概念脑洞、规则怪谈、反套路智斗',
+        tags: ['高信息密度', '冷静推演', '反转利落', '压迫感'],
+        summary: '紧跟线索收集与规则验证，用最真实的常人反应硬碰离奇规则；靠逻辑闭环顿悟与规则漏洞反杀引爆高潮。',
+        avoid: '忌强行降智制造悬念；忌规则自相矛盾临时打补丁。'
+      },
+      {
+        code: '文风卡 04',
+        name: '极速物理白描爽文流',
+        genres: '都市高武、无敌流、末世/系统打脸爽文',
+        tags: ['绝对物理化', '零修辞', '25字暴力断句', '词汇降级'],
+        summary: '纯第三方客观观察视角，严禁一切比喻/拟人/心理活动；单句死守25字内、对话绝对隔离、书面语强制降级为大白话，主打冷静掌控型主角。',
+        avoid: '强排他特化卡：不适合细腻恋爱心理戏或诗意古风。'
+      }
+    ];
+
+    const WORKFLOW_STEPS = [
+      {
+        step: 1,
+        phase: '开书做 1 次',
+        title: '攒灵感、定书名与黄金三章',
+        tools: 'Keep 灵感库 + novel-outliner + novel-hook-editor',
+        desc: '平时随手把脑洞丢进 Keep 置顶笔记。决定开书时聊出核心设定、结局方向与前 3 章节奏。'
+      },
+      {
+        step: 2,
+        phase: '开书做 1 次',
+        title: '建独立书档（默认用作家本我 v0.3）',
+        tools: '设定档案模板 + 作家本我（或文风库）',
+        desc: '在《连载中》建《书名-设定与记忆档案》；不点名文风卡即默认沿用不断进化的「作家本我」。'
+      },
+      {
+        step: 3,
+        phase: '每章循环',
+        title: '开新对话“点名读档”并拆细纲',
+        tools: '每写 5～8 章开一次新对话 + novel-outliner',
+        desc: '首句明确指定只读取当前书的设定档案（防串书），拆出本章 3～4 个强冲突节点与章末钩子。'
+      },
+      {
+        step: 4,
+        phase: '每章循环',
+        title: 'Canvas 写正文 → 毒舌挑刺 → 去 AI 味',
+        tools: '手机 Canvas + novel-writer + novel-critic + de-ai-writing',
+        desc: '在手机 App 点 + → Canvas 扩写 1500～2500 字，挑刺并去 AI 味后，点右上角 Export to Docs 导出。'
+      },
+      {
+        step: 5,
+        phase: '每章循环',
+        title: '回一句“定稿存档”完成持久记忆闭环',
+        tools: '主动提醒 + 自动更新档案与追踪表',
+        desc: '每章末尾我会主动提醒你；回“定稿存档”即自动更新摘要/伏笔/状态并登记字数。完本或写完一卷可顺手“融入自我进化”。'
+      }
+    ];
+
+    const CHECKLIST = [
+      { id: 'c1', text: '在手机 Gemini App 设置中确认「Google Workspace 关联」已开启' },
+      { id: 'c2', text: '在《小说创作工作台 / 连载中》建好本书专属《书名-设定与记忆档案》' },
+      { id: 'c3', text: '确认使用默认「作家本我 v0.3」还是绑定某张特化文风卡' },
+      { id: 'c4', text: '敲定核心卖点、主角防招烦 3 道保险锁与确认结局方向' },
+      { id: 'c5', text: '写完第 1 章并导出至 Google 文档，测试一次“定稿存档”闭环' }
+    ];
+
+    // Helpers
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toast-msg');
+      msgEl.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-3');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-3');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    function copyText(text, label) {
+      const done = () => showToast(label ? `已复制「${label}」` : '已复制到剪贴板');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
+    }
+
+    function fallbackCopy(text, cb) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      cb();
+    }
+
+    // Render Assets
+    function renderAssets() {
+      const grid = document.getElementById('assets-grid');
+      grid.innerHTML = ASSETS.map(a => `
+        <div class="card-hover bg-white rounded-2xl border border-stone-200 p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-2.5">
+              <div class="w-9 h-9 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                <i data-lucide="${a.icon}" class="w-4 h-4"></i>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium ${a.tagColor}">${a.tag}</span>
+            </div>
+            <h3 class="font-bold text-sm text-gray-900">${a.title}</h3>
+            <p class="text-xs text-stone-500 mt-1.5 leading-relaxed">${a.desc}</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
+            <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900">
+              直接打开 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>
+            ${a.subLinks ? `<div class="flex items-center gap-2">${a.subLinks.map(s => `<a href="${s.url}" target="_blank" rel="noopener noreferrer" class="text-xs px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-700">${s.label}</a>`).join('')}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render Dynamic Prompts
+    function renderPrompts() {
+      const book = (document.getElementById('input-book-name').value || '书名').trim();
+      const ch = document.getElementById('input-chapter-num').value || '1';
+      const prompts = [
+        {
+          title: '开新对话 · 防串书读档',
+          badge: '每 5～8 章用 1 次',
+          text: `只读取我云端硬盘里的《${book}-设定与记忆档案》，记住最新进度，不参考其他小说，准备用 /novel-outliner 拆第 ${ch} 章细纲。`
+        },
+        {
+          title: 'Canvas 写正文 + 一键去 AI 味',
+          badge: '码字核心口令',
+          text: `按刚才的细纲，用 /novel-writer 写第 ${ch} 章（2000 字左右），写完顺手用 /de-ai-writing 润色一遍。`
+        },
+        {
+          title: '写完定稿 · 极简自动存档',
+          badge: '防吃书闭环',
+          text: `定稿存档（把《${book}》第 ${ch} 章的摘要、人物状态变化和伏笔更新进记忆档案，并把字数登记到存稿追踪表）。`
+        },
+        {
+          title: '拆书 / 完本 · 进化作家本我',
+          badge: '养成人格',
+          text: `请将这次总结出的核心写法与节奏规律融入自我进化，同步更新我的「作家本我」长期记忆和云端《作家本我进化档案》。`
+        }
+      ];
+      const container = document.getElementById('prompts-list');
+      container.innerHTML = prompts.map((p, idx) => `
+        <div class="rounded-xl border border-stone-200 bg-stone-50/70 p-3.5 flex flex-col justify-between gap-2.5">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="text-xs font-bold text-gray-900">${p.title}</span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-white border border-stone-200 text-stone-500">${p.badge}</span>
+            </div>
+            <p class="text-xs text-stone-700 leading-relaxed select-all">${p.text}</p>
+          </div>
+          <div class="flex justify-end">
+            <button data-copy-idx="${idx}" class="copy-prompt-btn inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-gray-900 hover:bg-amber-700 text-white text-xs font-medium transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> 复制口令
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.copy-prompt-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = prompts[Number(btn.dataset.copyIdx)];
+          copyText(item.text, item.title);
+        });
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Render Skills
+    function renderSkills(filter = 'all') {
+      const list = filter === 'all' ? SKILLS : SKILLS.filter(s => s.category === filter);
+      const grid = document.getElementById('skills-grid');
+      grid.innerHTML = list.map(s => `
+        <div class="card-hover bg-white rounded-2xl border border-stone-200 p-4 flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <code class="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">/${s.id}</code>
+              <span class="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">${s.badge}</span>
+            </div>
+            <h3 class="font-bold text-base text-gray-900">${s.name}</h3>
+            <p class="text-xs text-stone-500 mt-1">自然触发示例：「${s.trigger}」</p>
+            <ul class="mt-3 space-y-1.5 text-xs text-stone-700">
+              ${s.highlights.map(h => `<li class="flex items-start gap-1.5"><span class="text-amber-600 mt-0.5">•</span><span>${h}</span></li>`).join('')}
+            </ul>
+          </div>
+          <div class="pt-2.5 border-t border-stone-100 flex justify-end">
+            <button data-skill-cmd="/${s.id} " data-skill-name="${s.name}" class="copy-skill-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-gray-900 hover:text-white text-stone-700 text-xs font-medium transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> 复制 /${s.id}
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('.copy-skill-btn').forEach(btn => {
+        btn.addEventListener('click', () => copyText(btn.dataset.skillCmd, btn.dataset.skillName));
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Render Style Cards
+    function renderStyles() {
+      const grid = document.getElementById('styles-grid');
+      grid.innerHTML = STYLE_CARDS.map(c => `
+        <div class="card-hover bg-white rounded-2xl border border-stone-200 p-4 flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-gray-900 text-white">${c.code}</span>
+              <span class="text-xs text-stone-500">${c.genres}</span>
+            </div>
+            <h3 class="font-bold text-base text-gray-900 mt-1">${c.name}</h3>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              ${c.tags.map(t => `<span class="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-100">${t}</span>`).join('')}
+            </div>
+            <p class="text-xs text-stone-700 mt-3 leading-relaxed">${c.summary}</p>
+            <p class="text-xs text-rose-700 bg-rose-50/70 rounded-lg px-2.5 py-1.5 mt-2.5"><strong>避雷：</strong>${c.avoid}</p>
+          </div>
+          <div class="pt-2.5 border-t border-stone-100 flex justify-end">
+            <button data-style-code="${c.code}" data-style-name="${c.name}" class="copy-style-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-amber-600 hover:text-white text-stone-700 text-xs font-medium transition">
+              <i data-lucide="plug" class="w-3.5 h-3.5"></i> 复制插卡口令
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('.copy-style-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cmd = `写这本书时，临时采用我《小说文风基因库》里的【${btn.dataset.styleCode}：${btn.dataset.styleName}】，并同步写进本书的设定与记忆档案。`;
+          copyText(cmd, `${btn.dataset.styleCode} 插卡口令`);
+        });
+      });
+    }
+
+    // Render Workflow & Checklist
+    function renderWorkflow() {
+      const stepsEl = document.getElementById('workflow-steps');
+      stepsEl.innerHTML = WORKFLOW_STEPS.map(w => `
+        <div class="flex items-start gap-3.5 p-3.5 rounded-xl bg-stone-50 border border-stone-200/80">
+          <div class="w-7 h-7 rounded-full ${w.step <= 2 ? 'bg-amber-600' : 'bg-gray-900'} text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+            ${w.step}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-bold text-gray-900">${w.title}</h3>
+              <span class="text-[11px] px-2 py-0.5 rounded-full ${w.step <= 2 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'} font-medium">${w.phase}</span>
+            </div>
+            <p class="text-xs text-stone-600 mt-1 leading-relaxed">${w.desc}</p>
+            <div class="text-[11px] text-stone-400 mt-1.5">涉及工具：${w.tools}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadChecklistState() {
+      try {
+        return JSON.parse(localStorage.getItem('novel_workbench_checks') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveChecklistState(state) {
+      try {
+        localStorage.setItem('novel_workbench_checks', JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    let checkState = loadChecklistState();
+    function renderChecklist() {
+      const container = document.getElementById('checklist-items');
+      const doneCount = CHECKLIST.filter(item => checkState[item.id]).length;
+      document.getElementById('checklist-progress').textContent = `${doneCount} / ${CHECKLIST.length}`;
+      container.innerHTML = CHECKLIST.map(item => {
+        const checked = !!checkState[item.id];
+        return `
+          <label class="flex items-center gap-3 p-3 rounded-xl border ${checked ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-stone-200'} cursor-pointer hover:border-amber-400 transition">
+            <input type="checkbox" data-check-id="${item.id}" ${checked ? 'checked' : ''} class="w-4 h-4 accent-emerald-600 rounded shrink-0" />
+            <span class="text-sm ${checked ? 'line-through text-stone-400' : 'text-stone-800'}">${item.text}</span>
+          </label>
+        `;
+      }).join('');
+
+      container.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', () => {
+          checkState[input.dataset.checkId] = input.checked;
+          saveChecklistState(checkState);
+          renderChecklist();
+        });
+      });
+    }
+
+    // Tab Switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => {
+          p.classList.toggle('hidden', p.id !== `tab-${target}`);
+        });
+      });
+    });
+
+    // Skill Filters
+    document.querySelectorAll('.skill-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.skill-filter-btn').forEach(b => {
+          b.classList.remove('bg-gray-900', 'text-white');
+          b.classList.add('bg-white', 'border', 'border-stone-200', 'text-stone-600');
+        });
+        btn.classList.add('bg-gray-900', 'text-white');
+        btn.classList.remove('bg-white', 'border', 'border-stone-200', 'text-stone-600');
+        renderSkills(btn.dataset.filter);
+      });
+    });
+
+    // Dynamic Prompt Inputs
+    document.getElementById('input-book-name').addEventListener('input', renderPrompts);
+    document.getElementById('input-chapter-num').addEventListener('input', renderPrompts);
+
+    // Reset Checklist
+    document.getElementById('btn-reset-checklist').addEventListener('click', () => {
+      checkState = {};
+      saveChecklistState(checkState);
+      renderChecklist();
+      showToast('已重置开书自检清单');
+    });
+
+    // Init
+    renderAssets();
+    renderPrompts();
+    renderSkills('all');
+    renderStyles();
+    renderWorkflow();
+    renderChecklist();
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>
